@@ -12,6 +12,7 @@ namespace nChain.CreateDB.Tools
     private const string DB_SCRIPTS_FOLDE_NAME = "Scripts";
 
     private const string SCRIPT_FILE_SYSTEM_MARKER = "SYS";
+    private const string SCRIPT_FILE_MASTER_MARKER = "MASTER";
 
     /// <summary>
     /// Method tries to find scritps folder for given project starting from current executing assembly location.
@@ -42,10 +43,20 @@ namespace nChain.CreateDB.Tools
       }
       throw new ApplicationException($"Can not find folder '{dbFolderName}' near location {Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}");
     }
+
+    public static bool IsUsingMasterConnectionString(string filePath)
+    {
+      return IsMarkerPresent(filePath, SCRIPT_FILE_MASTER_MARKER);
+    }
+
     public static bool IsUsingSystemConnectionString(string filePath)
     {
-      // 0101_MASTER_ScriptName.sql
+      return IsMarkerPresent(filePath, SCRIPT_FILE_SYSTEM_MARKER);
+    }
 
+    private static bool IsMarkerPresent(string filePath, string marker)
+    {
+      // 0101_MARKER_ScriptName.sql
       string fileName = Path.GetFileName(filePath);
       int nameStart = fileName.IndexOf("_") + 1;
       if (nameStart < 0 || (fileName.StartsWith("_"))) // we ignore scripts that start with _
@@ -58,7 +69,7 @@ namespace nChain.CreateDB.Tools
         // if not specified use default connection string
         return false;
       }
-      return fileName.Substring(nameStart, nameLength) == SCRIPT_FILE_SYSTEM_MARKER;
+      return fileName.Substring(nameStart, nameLength) == marker;
     }
   }
 }

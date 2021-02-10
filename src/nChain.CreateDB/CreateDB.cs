@@ -306,7 +306,7 @@ namespace nChain.CreateDB
       }
       else
       {
-        ExecuteSqlScript(filePath, connectionStringDDL);       
+        ExecuteSqlScript(filePath, ScriptPathTools.IsUsingMasterConnectionString(filePath) ? connectionStringSystem : connectionStringDDL);       
       }
     }
 
