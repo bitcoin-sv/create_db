@@ -131,7 +131,7 @@ namespace nChain.CreateDB.DB.Postgres
       // TODO:
       // RetryUtils.Exec(() => connection.Open());
 
-      if (executeInTransaction) // create database cannot run inside a transaction block
+      if (!executeInTransaction) // create database cannot run inside a transaction block
       {
         connection.Execute(command, commandTimeout: commandTimeout);
       }
