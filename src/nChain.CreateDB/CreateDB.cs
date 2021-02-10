@@ -223,9 +223,8 @@ namespace nChain.CreateDB
         {
           if (!ExecuteScript(files[i], isCreateDBScript, out errorMessageScript))
           {
-            errorMessage = $"Executing scripts from folder '{ files[i] }' returned error: '{ errorMessageScript }'.";
+            errorMessage = $"Executing script '{ files[i] }' returned error: '{ errorMessageScript }'.";
             errorMessageShort = errorMessageScript;
-
             if (i < files.Length)
             {
               errorMessage += Environment.NewLine + "Following files must still be processed: ";
@@ -254,7 +253,14 @@ namespace nChain.CreateDB
       errorMessage = "";
       try
       {
-        ExecuteSqlScript(scriptFilename, isCreateDBScript);
+        if (isCreateDBScript)
+        {
+          ExecuteSqlScript(scriptFilename, ScriptPathTools.IsUsingSystemConnectionString(scriptFilename) ? connectionStringSystem : connectionStringMaster, true);
+        }
+        else
+        {
+          ExecuteSqlScript(scriptFilename, ScriptPathTools.IsUsingMasterConnectionString(scriptFilename) ? connectionStringSystem : connectionStringDDL);
+        }
         return true;
       }
       catch (Exception e)
@@ -296,18 +302,6 @@ namespace nChain.CreateDB
       return files.ToArray();
     }
 
-    private void ExecuteSqlScript(string filePath, bool isCreateDBScript)
-    {
-      if (isCreateDBScript)
-      {
-        ExecuteSqlScript(filePath, ScriptPathTools.IsUsingSystemConnectionString(filePath) ? connectionStringSystem : connectionStringMaster, true); 
-      }
-      else
-      {
-        ExecuteSqlScript(filePath, ScriptPathTools.IsUsingMasterConnectionString(filePath) ? connectionStringSystem : connectionStringDDL);       
-      }
-    }
-
     private void ExecuteSqlScript(string filePath, string connectionString, bool createDB = false)
     {
       logger.LogInformation($"Starting with execution of script: { filePath }.");
@@ -315,7 +309,7 @@ namespace nChain.CreateDB
       int connectionTimeout = 30; 
 
       System.Text.Encoding encoding = DirectoryHelper.GetSqlScriptFileEncoding(filePath);
-      db.ExecuteFileScript(connectionString, filePath, encoding, connectionTimeout, createDB);
+      db.ExecuteFileScript(connectionString, filePath, encoding, connectionTimeout, !createDB);
 
     }
 
