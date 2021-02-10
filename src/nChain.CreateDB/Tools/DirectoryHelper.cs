@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace nChain.CreateDB
+namespace nChain.CreateDB.Tools
 {
   public class DirectoryHelper
   {

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2020 Bitcoin Association
 
 using Microsoft.Extensions.Logging;
+using nChain.CreateDB.Tools;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,54 +13,26 @@ namespace nChain.CreateDB
 {
   public class DBFolders
   {
+
     readonly string ProjectName;
-    readonly string CurrentRDBMSRootFolder; // e.g. "Postgres"
-    private const string ScriptsFolderName = "Scripts";
-
-    // e.g. "merchantapi2\src\MerchantAPI\APIGateway\APIGateway.Database"  
-    private string _ApplicationDbFolder;
-    public string ApplicationDbFolder
-    {
-      get
-      {
-        if (_ApplicationDbFolder == null)
-        {
-          _ApplicationDbFolder = GetDatabaseSrcRoot();
-        }
-        return _ApplicationDbFolder;
-      }
-    }
-
-    // e.g. "merchantapi2\src\MerchantAPI\APIGateway\APIGateway.Database\Scripts\Postgres"
-    public string PathToScripts
-    {
-      get
-      {
-        return Path.Combine(ApplicationDbFolder, ScriptsFolderName, CurrentRDBMSRootFolder);
-      }
-    }
-
     public List<string> CreateDBFoldersToProcess { get; } = new List<string>(); // folders with name "00_CreateDB"
 
     public List<string> ScriptFoldersToProcess { get; } = new List<string>(); // folders with version name
 
     private readonly HashSet<string> _projectAndVersions = new HashSet<string>();
 
-    public DBFolders(string projectName, RDBMS databaseType, ILogger logger)
+    public DBFolders(string projectName, string pathToScripts, ILogger logger)
     {
       ProjectName = projectName;
-      CurrentRDBMSRootFolder = databaseType.ToString();
-
-      if (!Directory.Exists(PathToScripts))
-        throw new ApplicationException($"Folder { PathToScripts } with custom scripts does not exist.");
+      if (!Directory.Exists(pathToScripts))
+        throw new ApplicationException($"Folder { pathToScripts } with scripts does not exist.");
 
       // Example: "[ApplicationName.Database]\Scripts\Postgres\": Postgres folder contains createDB or version folders with scripts.
-      ProcessProjectDirectory(logger, projectName, PathToScripts);
+      ProcessProjectDirectory(logger, pathToScripts);
     }
 
     public void WriteFolderNames(ILogger logger)
     {
-      logger.LogInformation("Application folder: " + ApplicationDbFolder);
       logger.LogInformation(" Folders for createDB:");
       foreach (string dbFolder in CreateDBFoldersToProcess)
       {
@@ -72,48 +45,18 @@ namespace nChain.CreateDB
       }
     }
 
-    public string GetDatabaseSrcRoot()
+    private void ProcessProjectDirectory(ILogger logger, string pathToScripts)
     {
-      string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-      string dbFolderName = GetRootDatabaseFolderName();
-
-      for (int i = 0; i < 6; i++)
+      foreach (string versionDirectoryName in DirectoryHelper.GetDirectories(pathToScripts))
       {
-        string testData = Path.Combine(path, dbFolderName);
-        if (Directory.Exists(testData))
-        {
-          return testData;
-        }
-        path = Path.Combine(path, "..");
-      }
-      throw new Exception($"Can not find '{dbFolderName}' near location {Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}");
-    }
-
-
-    private void ProcessProjectDirectory(ILogger logger, string projectName, string projectDirectoryName)
-    {
-      foreach (string versionDirectoryName in DirectoryHelper.GetDirectories(projectDirectoryName))
-      {
-        ProcessVersionDirectory(logger, projectName, versionDirectoryName);
+        ProcessVersionDirectory(logger, versionDirectoryName);
       }
     }
 
-    private void ProcessVersionDirectory(ILogger logger, string projectName, string versionDirectoryName)
+    private void ProcessVersionDirectory(ILogger logger, string versionDirectoryName)
     {
-      // first process all folders, that are not "ProjectName"
-      string tempProjectName;
-      foreach (string projectDirectoryName in DirectoryHelper.GetDirectories(versionDirectoryName))
-      {
-        tempProjectName = GetLastDirectoryName(projectDirectoryName);
-        if (projectName.ToLower() != tempProjectName.ToLower())
-        {
-          ProcessProjectDirectory(logger, tempProjectName, projectDirectoryName);
-        }
-      }
-
-      // now process "ProjectName" folder
       string version = GetLastDirectoryName(versionDirectoryName);
-      string projectAndVersion = (projectName + "#" + version).ToLower();
+      string projectAndVersion = (ProjectName + "#" + version).ToLower();
       if (version.ToLower() == "00_createdb")
       {
         if (!_projectAndVersions.Contains(projectAndVersion))
@@ -133,23 +76,15 @@ namespace nChain.CreateDB
       else
       {
         // ignore this folder
-        string warningMessage = $"Folder '{ versionDirectoryName }' and its scripts will be ignored.";
-
         logger.LogInformation("WARNING!!!!");
-        logger.LogInformation(warningMessage);
+        logger.LogInformation($"Folder '{ versionDirectoryName }' and its scripts will be ignored.");
       }
 
     }
 
-
     private bool IsVersionFolder(string versionDirectoryName)
     {
       return Int32.TryParse(versionDirectoryName, out _);
-    }
-
-    private string GetRootDatabaseFolderName()
-    {
-      return String.Join('.', ProjectName, "Database");
     }
 
     private string GetLastDirectoryName(string directoryName)

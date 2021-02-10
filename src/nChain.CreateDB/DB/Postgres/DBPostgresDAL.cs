@@ -6,7 +6,7 @@ using System;
 using System.IO;
 
 
-namespace nChain.CreateDB
+namespace nChain.CreateDB.DB.Postgres
 {
   class DBPostgresDAL
   {
@@ -122,8 +122,8 @@ namespace nChain.CreateDB
       return versionTableExists;
     }
 
-    public void ExecuteFileScript(string connectionString, string filepath, System.Text.Encoding encoding, int commandTimeout, bool createDB=false)
-    {
+    public void ExecuteFileScript(string connectionString, string filepath, System.Text.Encoding encoding, int commandTimeout, bool executeInTransaction= false)
+    { 
       using var connection = new NpgsqlConnection(connectionString);
       string command = File.ReadAllText(filepath, encoding);
 
@@ -131,7 +131,7 @@ namespace nChain.CreateDB
       // TODO:
       // RetryUtils.Exec(() => connection.Open());
 
-      if (createDB) // create database cannot run inside a transaction block
+      if (executeInTransaction) // create database cannot run inside a transaction block
       {
         connection.Execute(command, commandTimeout: commandTimeout);
       }

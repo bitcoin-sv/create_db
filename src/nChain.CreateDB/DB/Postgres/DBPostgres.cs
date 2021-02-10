@@ -3,12 +3,12 @@
 using Npgsql;
 using System.Text;
 
-namespace nChain.CreateDB
+namespace nChain.CreateDB.DB.Postgres
 {
-  class DBPostgresBL: IDB
+  class DBPostgres: IDB
   {
 
-    public DBPostgresBL()
+    public DBPostgres()
     {
     }
 
@@ -42,10 +42,10 @@ namespace nChain.CreateDB
 
     }
 
-    public void ExecuteFileScript(string connectionString, string filepath, Encoding encoding, int fragmentTimeout, bool createDb=false)
+    public void ExecuteFileScript(string connectionString, string filepath, Encoding encoding, int fragmentTimeout, bool executeInTransaction = false)
     {
       DBPostgresDAL db = new DBPostgresDAL();
-      db.ExecuteFileScript(connectionString, filepath, encoding, fragmentTimeout, createDb);
+      db.ExecuteFileScript(connectionString, filepath, encoding, fragmentTimeout, executeInTransaction);
     }
 
 

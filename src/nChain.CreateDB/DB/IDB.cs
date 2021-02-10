@@ -2,14 +2,14 @@
 
 using System.Text;
 
-namespace nChain.CreateDB
+namespace nChain.CreateDB.DB
 {
   public interface IDB
   {
     string GetDatabaseName(string connectionString);
     string GetConnectionStringWithDefaultDatabaseName(string connectionString);
     bool DatabaseExists(string connectionString, string databaseName);
-    void ExecuteFileScript(string connectionString, string filepath, Encoding encoding, int fragmentTimeout, bool createDB);
+    void ExecuteFileScript(string connectionString, string filepath, Encoding encoding, int fragmentTimeout, bool executeInTransaction);
     void CreateVersionTable(string connectionString);
     void GetCurrentVersion(string projectName, string connectionString, out int currentVersion, out bool updating);
     void StartUpdating(string projectName, int newVersion, string connectionString);
