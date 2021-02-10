@@ -9,7 +9,7 @@ namespace nChain.CreateDB.Tools
   public class ScriptPathTools
   {
     private const string DB_FOLDER_SUFFIX = "Database";
-    private const string DB_SCRIPTS_FOLDE_NAME = "Scripts";
+    private const string DB_SCRIPTS_FOLDER_NAME = "Scripts";
 
     private const string SCRIPT_FILE_SYSTEM_MARKER = "SYS";
     private const string SCRIPT_FILE_MASTER_MARKER = "MASTER";
@@ -33,7 +33,7 @@ namespace nChain.CreateDB.Tools
         if (Directory.Exists(testData))
         {
           // Generate scripts root path that ends with "MyProject.Database\Scripts\Postgres"
-          string scriptsRoot = Path.Combine(testData, DB_SCRIPTS_FOLDE_NAME, rdbms.ToString());
+          string scriptsRoot = Path.Combine(testData, DB_SCRIPTS_FOLDER_NAME, rdbms.ToString());
           // Verify that root exists
           if (!Directory.Exists(scriptsRoot))
             throw new ApplicationException($"Folder { scriptsRoot } with custom scripts does not exist.");
