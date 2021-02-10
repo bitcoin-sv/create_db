@@ -161,7 +161,6 @@ namespace nChain.CreateDB
       try
       {
         // folder example: Scripts\Postgres\01\
-        int executeIntermediateVersionsFromVersion = -1; // for now we always execute everything in folder, can be set if needed (in config)
         int[] installedVersions;
 
         db.GetCurrentVersion(projectName, connectionStringDDL, out int currentVersion, out bool updating);
@@ -177,8 +176,7 @@ namespace nChain.CreateDB
         }
 
         int newVersion = Int32.Parse(Path.GetFileName(scriptFolder));
-        if (executeIntermediateVersionsFromVersion == -1 && installedVersions.Any(x => x < newVersion) ||
-          executeIntermediateVersionsFromVersion > -1 && newVersion >= executeIntermediateVersionsFromVersion && !installedVersions.Any(x => x == newVersion))
+        if (installedVersions.Any(x => x < newVersion))
         {
           db.StartUpdating(projectName, newVersion, connectionStringDDL);
           if (!ExecuteScripts(scriptFolder, false, out errorMessage, out errorMessageShort))
