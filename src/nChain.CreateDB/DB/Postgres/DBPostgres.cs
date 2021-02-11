@@ -49,10 +49,10 @@ namespace nChain.CreateDB.DB.Postgres
     }
 
 
-    public bool DatabaseExists(string connectionStringMaster, string databaseName)
+    public bool DatabaseExists(string connectionString, string databaseName)
     {
       DBPostgresDAL db = new DBPostgresDAL();
-      bool result = db.DatabaseExists(connectionStringMaster, databaseName);
+      bool result = db.DatabaseExists(connectionString, databaseName);
       return result;
     }
 

@@ -20,7 +20,7 @@ namespace nChain.CreateDB.Tools
     /// <param name="projectName">Name of the project</param>
     /// <param name="rdbms">Type of the database</param>
     /// <returns>Root script folder that ends with projectName.Database\Scripts\rdbms</returns>
-    public static string FindScripts(string projectName, RDBMS rdbms)
+    public static string FindScripts(string projectName, DB.RDBMS rdbms)
     {
       string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
       string dbFolderName = String.Join('.', projectName, DB_FOLDER_SUFFIX);

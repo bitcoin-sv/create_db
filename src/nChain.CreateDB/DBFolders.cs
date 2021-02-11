@@ -3,11 +3,8 @@
 using Microsoft.Extensions.Logging;
 using nChain.CreateDB.Tools;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using System.Text;
 
 namespace nChain.CreateDB
 {
@@ -15,7 +12,8 @@ namespace nChain.CreateDB
   {
 
     readonly string ProjectName;
-    public List<string> CreateDBFoldersToProcess { get; } = new List<string>(); // folders with name "00_CreateDB"
+
+    public string CreateDBFolderToProcess { get; private set; } = String.Empty; // folder with name "00_CreateDB"
 
     public List<string> ScriptFoldersToProcess { get; } = new List<string>(); // folders with version name
 
@@ -33,10 +31,10 @@ namespace nChain.CreateDB
 
     public void WriteFolderNames(ILogger logger)
     {
-      logger.LogInformation(" Folders for createDB:");
-      foreach (string dbFolder in CreateDBFoldersToProcess)
+      logger.LogInformation(" Folder for createDB:");
+      if (!string.IsNullOrEmpty(CreateDBFolderToProcess))
       {
-        logger.LogInformation(dbFolder);
+        logger.LogInformation(CreateDBFolderToProcess);
       }
       logger.LogInformation(" Folders with scripts:");
       foreach (string scriptFolder in ScriptFoldersToProcess)
@@ -49,37 +47,31 @@ namespace nChain.CreateDB
     {
       foreach (string versionDirectoryName in DirectoryHelper.GetDirectories(pathToScripts))
       {
-        ProcessVersionDirectory(logger, versionDirectoryName);
-      }
-    }
-
-    private void ProcessVersionDirectory(ILogger logger, string versionDirectoryName)
-    {
-      string version = GetLastDirectoryName(versionDirectoryName);
-      string projectAndVersion = (ProjectName + "#" + version).ToLower();
-      if (version.ToLower() == "00_createdb")
-      {
-        if (!_projectAndVersions.Contains(projectAndVersion))
+        string version = GetLastDirectoryName(versionDirectoryName);
+        string projectAndVersion = (ProjectName + "#" + version).ToLower();
+        if (version.ToLower() == "00_createdb")
         {
-          _projectAndVersions.Add(projectAndVersion);
-          CreateDBFoldersToProcess.Add(versionDirectoryName);
+          if (!_projectAndVersions.Contains(projectAndVersion))
+          {
+            _projectAndVersions.Add(projectAndVersion);
+            CreateDBFolderToProcess = versionDirectoryName;
+          }
+        }
+        else if (IsVersionFolder(version))
+        {
+          if (!_projectAndVersions.Contains(projectAndVersion))
+          {
+            _projectAndVersions.Add(projectAndVersion);
+            ScriptFoldersToProcess.Add(versionDirectoryName);
+          }
+        }
+        else
+        {
+          // ignore this folder
+          logger.LogInformation("WARNING!!!!");
+          logger.LogInformation($"Folder '{ versionDirectoryName }' and its scripts will be ignored.");
         }
       }
-      else if (IsVersionFolder(version))
-      {
-        if (!_projectAndVersions.Contains(projectAndVersion))
-        {
-          _projectAndVersions.Add(projectAndVersion);
-          ScriptFoldersToProcess.Add(versionDirectoryName);
-        }
-      }
-      else
-      {
-        // ignore this folder
-        logger.LogInformation("WARNING!!!!");
-        logger.LogInformation($"Folder '{ versionDirectoryName }' and its scripts will be ignored.");
-      }
-
     }
 
     private bool IsVersionFolder(string versionDirectoryName)

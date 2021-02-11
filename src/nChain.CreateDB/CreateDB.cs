@@ -36,7 +36,7 @@ namespace nChain.CreateDB
 
       this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-      db = GetDB(rdbms);
+      db = DBFactory.GetDB(rdbms);
       if (connectionStringMaster != null)
         connectionStringSystem = db.GetConnectionStringWithDefaultDatabaseName(connectionStringMaster);
 
@@ -53,31 +53,20 @@ namespace nChain.CreateDB
         DBFolders dbFolders = new DBFolders(projectName, rootFolder, logger);
 
         string errorMessageLocal = "";
-        if (!string.IsNullOrEmpty(connectionStringMaster))
+        if (!string.IsNullOrEmpty(connectionStringMaster) && !string.IsNullOrEmpty(dbFolders.CreateDBFolderToProcess))
         {
           // we first process CreateDBFoldersToProcess - but only if no database exists yet
-          // we use masterConnectionString for these scripts, because we need stronger permissions to create database
-          for (int i = 0; i < dbFolders.CreateDBFoldersToProcess.Count; i++)
+          // we use connectionStringMaster and connectionStringSystem for these scripts, because we need stronger permissions to create database
+          if (!ProcessDBFolder(dbFolders.CreateDBFolderToProcess, out errorMessageLocal, out errorMessageShort))
           {
-            if (!ProcessDBFolder(dbFolders.CreateDBFoldersToProcess[i], out errorMessageLocal, out errorMessageShort))
+            errorMessage = $"Executing scripts from createDB folder '{ dbFolders.CreateDBFolderToProcess }' returned error: '{ errorMessageLocal }'.";
+            if (dbFolders.ScriptFoldersToProcess.Count > 0)
             {
-              errorMessage = $"Executing scripts from createDB folder '{ dbFolders.CreateDBFoldersToProcess[i] }' returned error: '{ errorMessageLocal }'.";
-              if (i < dbFolders.CreateDBFoldersToProcess.Count)
-              {
-                errorMessage += Environment.NewLine + "Following createDB folders must still be processed: ";
-                errorMessage = string.Join(Environment.NewLine, dbFolders.CreateDBFoldersToProcess.Skip(i).ToArray());
-              }
-              if (dbFolders.ScriptFoldersToProcess.Count > 0)
-              {
-                errorMessage += Environment.NewLine + "Following folders must still be processed: ";
-                for (int j = 0; j < dbFolders.ScriptFoldersToProcess.Count; j++)
-                {
-                  errorMessage += Environment.NewLine + dbFolders.ScriptFoldersToProcess[j];
-                }
-              }
-              return false;
+              errorMessage += Environment.NewLine + "Following folders must still be processed: ";
+              errorMessage += string.Join(Environment.NewLine, dbFolders.ScriptFoldersToProcess.ToArray());
             }
-          }
+            return false;
+          }          
         }
         
         // after folders with createDB naming, process the other (version)folders - ScriptFoldersToProcess
@@ -89,7 +78,7 @@ namespace nChain.CreateDB
             if (i < dbFolders.ScriptFoldersToProcess.Count)
             {
               errorMessage += Environment.NewLine + "Following folders must still be processed: ";
-              errorMessage = string.Join(Environment.NewLine, dbFolders.ScriptFoldersToProcess.Skip(i).ToArray());
+              errorMessage += string.Join(Environment.NewLine, dbFolders.ScriptFoldersToProcess.Skip(i).ToArray());
             }
             return false;
           }
@@ -109,7 +98,25 @@ namespace nChain.CreateDB
     {
       string databaseName = db.GetDatabaseName(connectionStringDDL);
       logger.LogInformation($"Trying to connect to DB: '{databaseName}'");
-      return db.DatabaseExists(connectionStringSystem ?? connectionStringDDL, databaseName);
+      bool success = false;
+
+      try
+      {
+        success = db.DatabaseExists(connectionStringDDL, databaseName);
+      }
+      catch (Exception ex)
+      {
+        logger.LogInformation($"Failed to connect to DB: '{databaseName}' with DDL connection.");
+        if (string.IsNullOrEmpty(connectionStringSystem))
+          throw ex;
+      }
+      // If connection fails retry with system connection string if present because
+      // database could exist but DDL user does not have right privileges yet.
+      if (!success && !string.IsNullOrEmpty(connectionStringSystem))
+      {
+        success = db.DatabaseExists(connectionStringSystem, databaseName);
+      }
+      return success;
     }
 
     private bool ProcessDBFolder(string dbFolder, out string errorMessage, out string errorMessageShort)
@@ -313,64 +320,6 @@ namespace nChain.CreateDB
 
     }
 
-    private IDB GetDB(RDBMS rdbms)
-    {
-      if (rdbms == RDBMS.Postgres)
-      {
-        return new DB.Postgres.DBPostgres();
-      }
-      else
-      {
-        throw new Exception($"{rdbms} not supported");
-      }
-    }
+   
   }
-
-  class ScriptNameSorter : IComparer<string>
-  {
-    public int Compare(string scriptName1, string scriptName2)
-    {
-      // First part of name (to first '_') is number of file inside version folder.
-
-      try
-      {
-        scriptName1 = new FileInfo(scriptName1).Name;
-        scriptName2 = new FileInfo(scriptName2).Name;
-
-        string sPrefix1 = scriptName1.Substring(0, scriptName1.IndexOf("_"));
-        int prefix1 = Int32.Parse(sPrefix1);
-
-        string sPrefix2 = scriptName2.Substring(0, scriptName2.IndexOf("_"));
-        int prefix2 = Int32.Parse(sPrefix2);
-
-        return prefix1.CompareTo(prefix2);
-      }
-      catch (Exception)
-      {
-        return scriptName1.CompareTo(scriptName2);
-      }
-    }
-  }
-
-  class VersionFolderNameSorter : IComparer<string>
-  {
-    public int Compare(string folderName1, string folderName2)
-    {
-      try
-      {
-        folderName1 = new DirectoryInfo(folderName1).Name;
-        folderName2 = new DirectoryInfo(folderName2).Name;
-
-        int version1 = Int32.Parse(folderName1);
-        int version2 = Int32.Parse(folderName2);
-
-        return version1.CompareTo(version2);
-      }
-      catch (Exception)
-      {
-        return folderName1.CompareTo(folderName2);
-      }
-    }
-  }
-
 }

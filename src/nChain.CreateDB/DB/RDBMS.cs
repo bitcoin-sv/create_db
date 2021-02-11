@@ -1,4 +1,4 @@
-﻿namespace nChain.CreateDB
+﻿namespace nChain.CreateDB.DB
 {
   public enum RDBMS
   {
