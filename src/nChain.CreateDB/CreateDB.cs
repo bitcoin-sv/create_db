@@ -25,14 +25,38 @@ namespace nChain.CreateDB
     readonly string connectionStringMaster; // connection string to database wiht superuser
     readonly string connectionStringSystem; // connection string to system database wiht superuser
 
-    public CreateDB(ILogger<CreateDB> logger, string projectName, RDBMS rdbms, string connectionStringDDL, string connectionStringMaster = null, string scriptsRoot = null)
+    readonly Dictionary<string, string> variables;
+
+    /// <summary>
+    /// Constructor for CreateDB instance.
+    /// </summary>
+    /// <param name="logger">Instance for logging</param>
+    /// <param name="projectName">Name of the project used for db script search</param>
+    /// <param name="rdbms">RDBMS type</param>
+    /// <param name="connectionStringDDL">Connection string used fo script execution.</param>
+    /// <param name="connectionStringMaster">Optional connection string used for system scripts (scripts with nn_SYS_name_of_script.sql name format).</param>
+    /// <param name="scriptsRoot">Optional parameter to force scripts root instead of project name based search.</param>
+    /// <param name="variables">
+    /// Variables and their values to be used in scripts. 
+    /// Scripts can contain placeholders in format ${VARIABLE_NAME} that will be replaced by values from this dictionary before execution.
+    /// Variable names are case sensitive.
+    /// </param>
+    public CreateDB(
+      ILogger<CreateDB> logger, 
+      string projectName, 
+      RDBMS rdbms, 
+      string connectionStringDDL, 
+      string connectionStringMaster = null, 
+      string scriptsRoot = null, 
+      Dictionary<string, string> variables = null)
     {
       this.projectName = projectName;
       this.rdbms = rdbms;
 
       this.connectionStringDDL = connectionStringDDL;
       this.connectionStringMaster = connectionStringMaster;
-      this.scriptsRoot = scriptsRoot; 
+      this.scriptsRoot = scriptsRoot;
+      this.variables = variables;
 
       this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -316,7 +340,7 @@ namespace nChain.CreateDB
       int connectionTimeout = 30; 
 
       System.Text.Encoding encoding = DirectoryHelper.GetSqlScriptFileEncoding(filePath);
-      db.ExecuteFileScript(connectionString, filePath, encoding, connectionTimeout, !createDB);
+      db.ExecuteFileScript(connectionString, filePath, encoding, connectionTimeout, variables, !createDB);
 
     }
 

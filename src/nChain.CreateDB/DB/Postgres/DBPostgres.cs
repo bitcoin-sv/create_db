@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2020 Bitcoin Association
 
 using Npgsql;
+using System.Collections.Generic;
 using System.Text;
 
 namespace nChain.CreateDB.DB.Postgres
@@ -42,10 +43,10 @@ namespace nChain.CreateDB.DB.Postgres
 
     }
 
-    public void ExecuteFileScript(string connectionString, string filepath, Encoding encoding, int fragmentTimeout, bool executeInTransaction = false)
+    public void ExecuteFileScript(string connectionString, string filepath, Encoding encoding, int fragmentTimeout, Dictionary<string, string> variables, bool executeInTransaction = false)
     {
       DBPostgresDAL db = new DBPostgresDAL();
-      db.ExecuteFileScript(connectionString, filepath, encoding, fragmentTimeout, executeInTransaction);
+      db.ExecuteFileScript(connectionString, filepath, encoding, fragmentTimeout, variables, executeInTransaction);
     }
 
 

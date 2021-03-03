@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2020 Bitcoin Association
 
+using System.Collections.Generic;
 using System.Text;
 
 namespace nChain.CreateDB.DB
@@ -9,7 +10,7 @@ namespace nChain.CreateDB.DB
     string GetDatabaseName(string connectionString);
     string GetConnectionStringWithDefaultDatabaseName(string connectionString);
     bool DatabaseExists(string connectionString, string databaseName);
-    void ExecuteFileScript(string connectionString, string filepath, Encoding encoding, int fragmentTimeout, bool executeInTransaction);
+    void ExecuteFileScript(string connectionString, string filepath, Encoding encoding, int fragmentTimeout, Dictionary<string, string> variables, bool executeInTransaction);
     void CreateVersionTable(string connectionString);
     void GetCurrentVersion(string projectName, string connectionString, out int currentVersion, out bool updating);
     void StartUpdating(string projectName, int newVersion, string connectionString);
