@@ -3,6 +3,7 @@
 using Dapper;
 using Npgsql;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 
@@ -122,10 +123,13 @@ namespace nChain.CreateDB.DB.Postgres
       return versionTableExists;
     }
 
-    public void ExecuteFileScript(string connectionString, string filepath, System.Text.Encoding encoding, int commandTimeout, bool executeInTransaction= false)
+    public void ExecuteFileScript(string connectionString, string filepath, System.Text.Encoding encoding, int commandTimeout, Dictionary<string, string> variables, bool executeInTransaction = false)
     { 
       using var connection = new NpgsqlConnection(connectionString);
       string command = File.ReadAllText(filepath, encoding);
+
+      // Replace placeholders with variable values
+      command = ApplyVariableValues(command, variables);
 
       connection.Open();
       // TODO:
@@ -143,6 +147,21 @@ namespace nChain.CreateDB.DB.Postgres
       }
 
     }  
+
+    private string ApplyVariableValues(string command, Dictionary<string, string> variables)
+    {
+      if (variables == null)
+        return command;
+
+      string result = command;
+      foreach (KeyValuePair<string, string> variable in variables)
+      {
+        string placeholder = $"${{{variable.Key}}}";
+        result = result.Replace(placeholder, variable.Value);
+      }
+      return result;
+    }
+
 
     private void ExecuteNonQuery(string command, string connectionString, object parameters = null)
     {
