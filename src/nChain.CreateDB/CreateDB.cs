@@ -290,7 +290,7 @@ namespace nChain.CreateDB
         }
         else
         {
-          ExecuteSqlScript(scriptFilename, ScriptPathTools.IsUsingMasterConnectionString(scriptFilename) ? connectionStringSystem : connectionStringDDL);
+          ExecuteSqlScript(scriptFilename, ScriptPathTools.IsUsingMasterConnectionString(scriptFilename) ? connectionStringMaster : connectionStringDDL);
         }
         return true;
       }
