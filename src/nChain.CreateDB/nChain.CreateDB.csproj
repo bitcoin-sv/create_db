@@ -7,6 +7,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Copyright>Copyright (c) 2021 Bitcoin Association</Copyright>
+    <Description>CreateDB Library is collection of classes used by Merchant API and related products.</Description>
   </PropertyGroup>
 
   <ItemGroup>
